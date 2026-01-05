@@ -83,7 +83,7 @@ twilio.voice.url=https://handler.twilio.com/twiml/EHxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ```properties
 # Twilio Configuration (Example - Replace with your actual values)
-twilio.account.sid=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+twilio.account.sid=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 twilio.auth.token=your_auth_token_here
 twilio.phone.number=+1234567890
 twilio.voice.url=https://handler.twilio.com/twiml/EHXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
