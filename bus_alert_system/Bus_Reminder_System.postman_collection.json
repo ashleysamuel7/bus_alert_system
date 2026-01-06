@@ -1,0 +1,208 @@
+{
+	"info": {
+		"_postman_id": "bus-reminder-system-collection",
+		"name": "Bus Reminder System API",
+		"description": "Postman collection for testing Bus Passenger Reminder System endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/bus-location/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bus-location",
+						"health"
+					]
+				},
+				"description": "Check if the service is running and healthy"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Bus Location - BUS001",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bus_id\": \"BUS001\",\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"timestamp\": \"2024-01-15T10:30:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/bus-location/update",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bus-location",
+						"update"
+					]
+				},
+				"description": "Send bus location update for BUS001. This will trigger ETA calculation and notifications if passengers are within threshold."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Bus Location - BUS002",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bus_id\": \"BUS002\",\n    \"latitude\": 40.7580,\n    \"longitude\": -73.9855,\n    \"timestamp\": \"2024-01-15T11:00:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/bus-location/update",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bus-location",
+						"update"
+					]
+				},
+				"description": "Send bus location update for BUS002"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Bus Location - BUS003 (NYC Area)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bus_id\": \"BUS003\",\n    \"latitude\": 40.7505,\n    \"longitude\": -73.9934,\n    \"timestamp\": \"2024-01-15T12:00:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/bus-location/update",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bus-location",
+						"update"
+					]
+				},
+				"description": "Send bus location update for BUS003 in NYC area"
+			},
+			"response": []
+		},
+		{
+			"name": "Update Bus Location - Invalid Bus",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bus_id\": \"BUS999\",\n    \"latitude\": 40.7128,\n    \"longitude\": -74.0060,\n    \"timestamp\": \"2024-01-15T10:30:00Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/bus-location/update",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bus-location",
+						"update"
+					]
+				},
+				"description": "Test with a bus ID that doesn't exist in the database. Should return success but with 0 notifications."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Bus Location - Missing Fields",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"bus_id\": \"BUS001\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/bus-location/update",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"bus-location",
+						"update"
+					]
+				},
+				"description": "Test with missing required fields (latitude, longitude). Should return an error."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
+
