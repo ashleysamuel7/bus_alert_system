@@ -1,13 +1,10 @@
 package com.busreminder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest(classes = {BusReminderApplication.class, BusReminderApplicationTest.TestConfig.class})
+@SpringBootTest
 @TestPropertySource(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb",
     "spring.datasource.driver-class-name=org.h2.Driver",
@@ -17,14 +14,6 @@ import org.springframework.test.context.TestPropertySource;
     "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration"
 })
 class BusReminderApplicationTest {
-
-    @Configuration
-    static class TestConfig {
-        @Bean
-        public ObjectMapper objectMapper() {
-            return new ObjectMapper();
-        }
-    }
 
     @Test
     void contextLoads() {

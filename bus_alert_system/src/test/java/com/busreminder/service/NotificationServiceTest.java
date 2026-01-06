@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -32,6 +33,11 @@ class NotificationServiceTest {
     @BeforeEach
     void setUp() {
         reset(busPassengerRepository);
+        // Reset Twilio fields
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "");
+        ReflectionTestUtils.setField(notificationService, "twilioAuthToken", "");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "");
+        ReflectionTestUtils.setField(notificationService, "twilioVoiceUrl", "");
     }
 
     @Test
@@ -110,6 +116,186 @@ class NotificationServiceTest {
         request.setPickupAddress("123 Main St");
         request.setEstimatedMinutes(5L);
         return request;
+    }
+
+    @Test
+    void testInit_WithTwilioCredentials() {
+        // Given
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "AC1234567890");
+        ReflectionTestUtils.setField(notificationService, "twilioAuthToken", "auth_token_123");
+
+        // When
+        ReflectionTestUtils.invokeMethod(notificationService, "init");
+
+        // Then - verify no exception is thrown and Twilio is initialized
+        // Note: We can't easily verify Twilio.init() was called without PowerMockito,
+        // but we can verify the method completes successfully
+        assertDoesNotThrow(() -> ReflectionTestUtils.invokeMethod(notificationService, "init"));
+    }
+
+    @Test
+    void testInit_WithoutTwilioCredentials() {
+        // Given - credentials are empty (set in setUp)
+
+        // When
+        ReflectionTestUtils.invokeMethod(notificationService, "init");
+
+        // Then - verify no exception is thrown
+        assertDoesNotThrow(() -> ReflectionTestUtils.invokeMethod(notificationService, "init"));
+    }
+
+    @Test
+    void testSendSMS_MissingConfig() {
+        // Given
+        NotificationRequest request = createNotificationRequest("PASS001");
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "");
+
+        // When
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - verify markAsNotified is still called (SMS skipped but notification marked)
+        verify(busPassengerRepository, atLeastOnce()).findAll();
+    }
+
+    @Test
+    void testSendSMS_Exception() {
+        // Given
+        NotificationRequest request = createNotificationRequest("PASS001");
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "AC123");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "+1234567890");
+        
+        BusPassenger passenger = createPassenger("PASS001");
+        when(busPassengerRepository.findAll()).thenReturn(Arrays.asList(passenger));
+        when(busPassengerRepository.save(any(BusPassenger.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When - SMS will fail due to invalid credentials, but should not throw exception
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - verify markAsNotified is still called despite SMS failure
+        verify(busPassengerRepository, atLeastOnce()).findAll();
+        verify(busPassengerRepository, atLeastOnce()).save(any(BusPassenger.class));
+    }
+
+    @Test
+    void testMakeCall_MissingConfig() {
+        // Given
+        NotificationRequest request = createNotificationRequest("PASS001");
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "");
+        ReflectionTestUtils.setField(notificationService, "twilioVoiceUrl", "");
+
+        // When
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - verify markAsNotified is still called (call skipped but notification marked)
+        verify(busPassengerRepository, atLeastOnce()).findAll();
+    }
+
+    @Test
+    void testMakeCall_Exception() {
+        // Given
+        NotificationRequest request = createNotificationRequest("PASS001");
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "AC123");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "+1234567890");
+        ReflectionTestUtils.setField(notificationService, "twilioVoiceUrl", "invalid-url");
+        
+        BusPassenger passenger = createPassenger("PASS001");
+        when(busPassengerRepository.findAll()).thenReturn(Arrays.asList(passenger));
+        when(busPassengerRepository.save(any(BusPassenger.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When - Call will fail due to invalid URL, but should not throw exception
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - verify markAsNotified is still called despite call failure
+        verify(busPassengerRepository, atLeastOnce()).findAll();
+        verify(busPassengerRepository, atLeastOnce()).save(any(BusPassenger.class));
+    }
+
+    @Test
+    void testMarkAsNotified_NoPassengersFound() {
+        // Given
+        String passengerId = "PASS999";
+        NotificationRequest request = createNotificationRequest(passengerId);
+        
+        when(busPassengerRepository.findAll()).thenReturn(Collections.emptyList());
+
+        // When
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then
+        verify(busPassengerRepository).findAll();
+        verify(busPassengerRepository, never()).save(any(BusPassenger.class));
+    }
+
+    @Test
+    void testMarkAsNotified_MultiplePassengers() {
+        // Given
+        String passengerId = "PASS001";
+        NotificationRequest request = createNotificationRequest(passengerId);
+        
+        BusPassenger passenger1 = createPassenger(passengerId);
+        passenger1.setPnrId("PNR001");
+        BusPassenger passenger2 = createPassenger(passengerId);
+        passenger2.setPnrId("PNR002");
+        
+        when(busPassengerRepository.findAll()).thenReturn(Arrays.asList(passenger1, passenger2));
+        when(busPassengerRepository.save(any(BusPassenger.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - both passengers should be marked as notified
+        ArgumentCaptor<BusPassenger> captor = ArgumentCaptor.forClass(BusPassenger.class);
+        verify(busPassengerRepository).findAll();
+        verify(busPassengerRepository, times(2)).save(captor.capture());
+        
+        List<BusPassenger> savedPassengers = captor.getAllValues();
+        assertEquals(2, savedPassengers.size());
+        assertTrue(savedPassengers.stream().allMatch(p -> p.getNotified()));
+        assertTrue(savedPassengers.stream().allMatch(p -> p.getNotificationSentAt() != null));
+        assertTrue(savedPassengers.stream().allMatch(p -> p.getCallMadeAt() != null));
+    }
+
+    @Test
+    void testSendSMS_WithNullValues() {
+        // Given
+        NotificationRequest request = createNotificationRequest("PASS001");
+        request.setPassengerName(null);
+        request.setPickupAddress(null);
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "AC123");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "+1234567890");
+        
+        BusPassenger passenger = createPassenger("PASS001");
+        when(busPassengerRepository.findAll()).thenReturn(Arrays.asList(passenger));
+        when(busPassengerRepository.save(any(BusPassenger.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When - should handle null values gracefully
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - verify no exception thrown
+        verify(busPassengerRepository, atLeastOnce()).findAll();
+    }
+
+    @Test
+    void testMakeCall_WithNullValues() {
+        // Given
+        NotificationRequest request = createNotificationRequest("PASS001");
+        request.setPassengerName(null);
+        request.setPickupAddress(null);
+        ReflectionTestUtils.setField(notificationService, "twilioAccountSid", "AC123");
+        ReflectionTestUtils.setField(notificationService, "twilioPhoneNumber", "+1234567890");
+        ReflectionTestUtils.setField(notificationService, "twilioVoiceUrl", "https://demo.twilio.com/welcome/voice/");
+        
+        BusPassenger passenger = createPassenger("PASS001");
+        when(busPassengerRepository.findAll()).thenReturn(Arrays.asList(passenger));
+        when(busPassengerRepository.save(any(BusPassenger.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When - should handle null values gracefully
+        notificationService.sendNotifications(Arrays.asList(request));
+
+        // Then - verify no exception thrown
+        verify(busPassengerRepository, atLeastOnce()).findAll();
     }
 
     private BusPassenger createPassenger(String passengerId) {
