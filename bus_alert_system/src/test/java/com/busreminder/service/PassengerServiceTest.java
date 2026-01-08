@@ -4,6 +4,7 @@ import com.busreminder.model.BusPnr;
 import com.busreminder.model.BusPassenger;
 import com.busreminder.repository.BusPnrRepository;
 import com.busreminder.repository.BusPassengerRepository;
+import com.busreminder.service.impl.PassengerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +30,7 @@ class PassengerServiceTest {
     private BusPassengerRepository busPassengerRepository;
 
     @InjectMocks
-    private PassengerService passengerService;
+    private PassengerServiceImpl passengerService;
 
     @BeforeEach
     void setUp() {

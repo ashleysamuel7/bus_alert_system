@@ -3,6 +3,7 @@ package com.busreminder.service;
 import com.busreminder.dto.NotificationRequest;
 import com.busreminder.model.BusPassenger;
 import com.busreminder.repository.BusPassengerRepository;
+import com.busreminder.service.impl.NotificationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +29,7 @@ class NotificationServiceTest {
     private BusPassengerRepository busPassengerRepository;
 
     @InjectMocks
-    private NotificationService notificationService;
+    private NotificationServiceImpl notificationService;
 
     @BeforeEach
     void setUp() {
