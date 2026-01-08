@@ -36,11 +36,24 @@ Should show all services as "Up".
 
 ## Sending Messages via CLI
 
+### Quick Start - Send Sample Message
+
+**Copy and paste this command to send a sample message:**
+
+```bash
+echo '{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"2024-01-15T10:30:00Z"}' | docker exec -i kafka kafka-console-producer --topic bus-location-updates --bootstrap-server localhost:9092
+```
+
+**Send with current timestamp:**
+```bash
+echo "{\"bus_id\":\"BUS001\",\"latitude\":40.7128,\"longitude\":-74.0060,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" | docker exec -i kafka kafka-console-producer --topic bus-location-updates --bootstrap-server localhost:9092
+```
+
 ### Using Docker Exec (Recommended)
 
 **Send a single message:**
 ```bash
-docker exec -i kafka kafka-console-producer.sh \
+docker exec -i kafka kafka-console-producer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092
 ```
@@ -55,14 +68,14 @@ Press `Ctrl+C` to exit.
 **Send message from file:**
 ```bash
 echo '{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"2024-01-15T10:30:00Z"}' | \
-  docker exec -i kafka kafka-console-producer.sh \
+  docker exec -i kafka kafka-console-producer \
     --topic bus-location-updates \
     --bootstrap-server localhost:9092
 ```
 
 **Send multiple messages:**
 ```bash
-cat << 'EOF' | docker exec -i kafka kafka-console-producer.sh \
+cat << 'EOF' | docker exec -i kafka kafka-console-producer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092
 {"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"2024-01-15T10:30:00Z"}
@@ -107,12 +120,38 @@ Messages must be valid JSON with the following structure:
 {"bus_id":"BUS003","latitude":40.7614,"longitude":-73.9776,"timestamp":"2024-01-15T12:00:00Z"}
 ```
 
+### Ready-to-Use Sample Commands
+
+**Send sample message for BUS001:**
+```bash
+echo '{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"2024-01-15T10:30:00Z"}' | docker exec -i kafka kafka-console-producer --topic bus-location-updates --bootstrap-server localhost:9092
+```
+
+**Send sample message for BUS002:**
+```bash
+echo '{"bus_id":"BUS002","latitude":40.7580,"longitude":-73.9855,"timestamp":"2024-01-15T10:35:00Z"}' | docker exec -i kafka kafka-console-producer --topic bus-location-updates --bootstrap-server localhost:9092
+```
+
+**Send sample message with current timestamp:**
+```bash
+echo "{\"bus_id\":\"BUS001\",\"latitude\":40.7128,\"longitude\":-74.0060,\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" | docker exec -i kafka kafka-console-producer --topic bus-location-updates --bootstrap-server localhost:9092
+```
+
+**Send multiple sample messages at once:**
+```bash
+cat << 'EOF' | docker exec -i kafka kafka-console-producer --topic bus-location-updates --bootstrap-server localhost:9092
+{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"2024-01-15T10:30:00Z"}
+{"bus_id":"BUS002","latitude":40.7580,"longitude":-73.9855,"timestamp":"2024-01-15T10:35:00Z"}
+{"bus_id":"BUS003","latitude":40.7614,"longitude":-73.9776,"timestamp":"2024-01-15T10:40:00Z"}
+EOF
+```
+
 ## Consuming Messages
 
 ### View Messages in Real-Time
 
 ```bash
-docker exec -it kafka kafka-console-consumer.sh \
+docker exec -it kafka kafka-console-consumer \
   --topic bus-location-updates \
   --from-beginning \
   --bootstrap-server localhost:9092
@@ -121,7 +160,7 @@ docker exec -it kafka kafka-console-consumer.sh \
 ### View Latest Messages Only
 
 ```bash
-docker exec -it kafka kafka-console-consumer.sh \
+docker exec -it kafka kafka-console-consumer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092
 ```
@@ -129,7 +168,7 @@ docker exec -it kafka kafka-console-consumer.sh \
 ### Consume with Consumer Group
 
 ```bash
-docker exec -it kafka kafka-console-consumer.sh \
+docker exec -it kafka kafka-console-consumer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092 \
   --group test-consumer-group \
@@ -141,7 +180,7 @@ docker exec -it kafka kafka-console-consumer.sh \
 ### List All Topics
 
 ```bash
-docker exec -it kafka kafka-topics.sh \
+docker exec -it kafka kafka-topics \
   --list \
   --bootstrap-server localhost:9092
 ```
@@ -149,7 +188,7 @@ docker exec -it kafka kafka-topics.sh \
 ### Describe Topic
 
 ```bash
-docker exec -it kafka kafka-topics.sh \
+docker exec -it kafka kafka-topics \
   --describe \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092
@@ -158,7 +197,7 @@ docker exec -it kafka kafka-topics.sh \
 ### Create Topic Manually (Optional)
 
 ```bash
-docker exec -it kafka kafka-topics.sh \
+docker exec -it kafka kafka-topics \
   --create \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092 \
@@ -169,7 +208,7 @@ docker exec -it kafka kafka-topics.sh \
 ### Delete Topic
 
 ```bash
-docker exec -it kafka kafka-topics.sh \
+docker exec -it kafka kafka-topics \
   --delete \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092
@@ -180,7 +219,7 @@ docker exec -it kafka kafka-topics.sh \
 ### List Consumer Groups
 
 ```bash
-docker exec -it kafka kafka-consumer-groups.sh \
+docker exec -it kafka kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --list
 ```
@@ -188,7 +227,7 @@ docker exec -it kafka kafka-consumer-groups.sh \
 ### Describe Consumer Group
 
 ```bash
-docker exec -it kafka kafka-consumer-groups.sh \
+docker exec -it kafka kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --group bus-location-consumer-group \
   --describe
@@ -203,7 +242,7 @@ This shows:
 
 **Reset to earliest:**
 ```bash
-docker exec -it kafka kafka-consumer-groups.sh \
+docker exec -it kafka kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --group bus-location-consumer-group \
   --reset-offsets \
@@ -214,7 +253,7 @@ docker exec -it kafka kafka-consumer-groups.sh \
 
 **Reset to latest:**
 ```bash
-docker exec -it kafka kafka-consumer-groups.sh \
+docker exec -it kafka kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --group bus-location-consumer-group \
   --reset-offsets \
@@ -234,7 +273,7 @@ docker compose up -d
 ### 2. Verify Topic Exists (or create it)
 
 ```bash
-docker exec -it kafka kafka-topics.sh \
+docker exec -it kafka kafka-topics \
   --list \
   --bootstrap-server localhost:9092
 ```
@@ -249,7 +288,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 
 ```bash
 echo '{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"2024-01-15T10:30:00Z"}' | \
-  docker exec -i kafka kafka-console-producer.sh \
+  docker exec -i kafka kafka-console-producer \
     --topic bus-location-updates \
     --bootstrap-server localhost:9092
 ```
@@ -293,7 +332,7 @@ lsof -i :9092
 
 1. **Check consumer group:**
    ```bash
-   docker exec -it kafka kafka-consumer-groups.sh \
+   docker exec -it kafka kafka-consumer-groups \
      --bootstrap-server localhost:9092 \
      --group bus-location-consumer-group \
      --describe
@@ -303,7 +342,7 @@ lsof -i :9092
 
 3. **Verify topic exists:**
    ```bash
-   docker exec -it kafka kafka-topics.sh \
+   docker exec -it kafka kafka-topics \
      --list \
      --bootstrap-server localhost:9092
    ```
@@ -314,7 +353,7 @@ lsof -i :9092
 
 If consumer lag is high:
 ```bash
-docker exec -it kafka kafka-consumer-groups.sh \
+docker exec -it kafka kafka-consumer-groups \
   --bootstrap-server localhost:9092 \
   --group bus-location-consumer-group \
   --describe
@@ -338,7 +377,7 @@ echo '{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"20
 ### Send Messages with Key
 
 ```bash
-docker exec -i kafka kafka-console-producer.sh \
+docker exec -i kafka kafka-console-producer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092 \
   --property "parse.key=true" \
@@ -350,7 +389,7 @@ Then send: `BUS001:{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"t
 ### View Messages with Timestamps
 
 ```bash
-docker exec -it kafka kafka-console-consumer.sh \
+docker exec -it kafka kafka-console-consumer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092 \
   --property print.timestamp=true \
@@ -363,14 +402,14 @@ docker exec -it kafka kafka-console-consumer.sh \
 # In one terminal - produce messages
 while true; do
   echo '{"bus_id":"BUS001","latitude":40.7128,"longitude":-74.0060,"timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' | \
-    docker exec -i kafka kafka-console-producer.sh \
+    docker exec -i kafka kafka-console-producer \
       --topic bus-location-updates \
       --bootstrap-server localhost:9092
   sleep 1
 done
 
 # In another terminal - consume messages
-docker exec -it kafka kafka-console-consumer.sh \
+docker exec -it kafka kafka-console-consumer \
   --topic bus-location-updates \
   --bootstrap-server localhost:9092
 ```

@@ -2,6 +2,8 @@ package com.busreminder.service;
 
 import com.busreminder.dto.NotificationRequest;
 import com.busreminder.model.BusPassenger;
+import com.busreminder.service.impl.LocationProcessingServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,8 +26,11 @@ class LocationProcessingServiceTest {
     @Mock
     private PassengerService passengerService;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     @InjectMocks
-    private LocationProcessingService locationProcessingService;
+    private LocationProcessingServiceImpl locationProcessingService;
 
     @BeforeEach
     void setUp() {

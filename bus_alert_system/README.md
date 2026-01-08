@@ -36,6 +36,7 @@ curl http://localhost:8080/api/bus-location/health
 
 - **[SETUP.md](SETUP.md)** - Complete setup guide (database, Kafka, API keys, Twilio)
 - **[KAFKA.md](KAFKA.md)** - Kafka guide with CLI instructions for sending messages
+- **[DATABASE_STRUCTURE.md](DATABASE_STRUCTURE.md)** - Database schema and table definitions
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment (Docker, Kubernetes, traditional)
 - **[DEVELOPER.md](DEVELOPER.md)** - Development workflow, testing, code style
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and components
