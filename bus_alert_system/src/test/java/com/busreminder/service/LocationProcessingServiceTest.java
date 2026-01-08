@@ -241,4 +241,136 @@ class LocationProcessingServiceTest {
         passenger.setNotified(false);
         return passenger;
     }
+
+    @Test
+    void testCalculateETA_HaversineFormula_NoApiKey() {
+        // Given - no API key set (default)
+        ReflectionTestUtils.setField(locationProcessingService, "googleMapsApiKey", "");
+        Double originLat = 40.7128;
+        Double originLng = -74.0060;
+        Double destLat = 40.7580;
+        Double destLng = -73.9855;
+
+        // When
+        Long result = (Long) ReflectionTestUtils.invokeMethod(
+                locationProcessingService,
+                "calculateETA",
+                originLat, originLng, destLat, destLng
+        );
+
+        // Then - should use Haversine formula
+        assertNotNull(result);
+        assertTrue(result > 0);
+    }
+
+    @Test
+    void testCalculateETAHaversine_ReturnsValidValue() {
+        // Given
+        Double originLat = 40.7128;
+        Double originLng = -74.0060;
+        Double destLat = 40.7580;
+        Double destLng = -73.9855;
+
+        // When - invoke private method using ReflectionTestUtils
+        Long result = (Long) ReflectionTestUtils.invokeMethod(
+                locationProcessingService,
+                "calculateETAHaversine",
+                originLat, originLng, destLat, destLng
+        );
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result > 0);
+    }
+
+    @Test
+    void testCalculateETAHaversine_SameLocation() {
+        // Given - same origin and destination
+        Double lat = 40.7128;
+        Double lng = -74.0060;
+
+        // When
+        Long result = (Long) ReflectionTestUtils.invokeMethod(
+                locationProcessingService,
+                "calculateETAHaversine",
+                lat, lng, lat, lng
+        );
+
+        // Then - should return 0 or very small value
+        assertNotNull(result);
+        assertTrue(result >= 0);
+    }
+
+    @Test
+    void testProcessBusLocation_WithNullCoordinates() {
+        // Given
+        String busId = "BUS001";
+        Double busLatitude = 40.7128;
+        Double busLongitude = -74.0060;
+
+        BusPassenger passenger = new BusPassenger();
+        passenger.setPnrId("PNR001");
+        passenger.setPassengerId("PASS001");
+        passenger.setPickupLatitude(null);
+        passenger.setPickupLongitude(null);
+        passenger.setNotified(false);
+
+        when(passengerService.getUnnotifiedPassengersByBusId(busId))
+                .thenReturn(Arrays.asList(passenger));
+
+        // When
+        assertThrows(Exception.class, () -> {
+            locationProcessingService.processBusLocation(busId, busLatitude, busLongitude);
+        });
+    }
+
+    @Test
+    void testProcessBusLocation_PartialPassengersWithinThreshold() {
+        // Given
+        String busId = "BUS001";
+        Double busLatitude = 40.7128;
+        Double busLongitude = -74.0060;
+
+        BusPassenger passenger1 = createPassenger("PNR001", "PASS001");
+        BusPassenger passenger2 = createPassengerFarAway("PNR002", "PASS002");
+
+        when(passengerService.getUnnotifiedPassengersByBusId(busId))
+                .thenReturn(Arrays.asList(passenger1, passenger2));
+
+        // When
+        List<NotificationRequest> result = locationProcessingService.processBusLocation(
+                busId, busLatitude, busLongitude);
+
+        // Then - only passenger1 should get notification (within threshold)
+        assertEquals(1, result.size());
+        assertEquals("PASS001", result.get(0).getPassengerId());
+    }
+
+    @Test
+    void testProcessBusLocation_NotificationRequestFields() {
+        // Given
+        String busId = "BUS001";
+        Double busLatitude = 40.7128;
+        Double busLongitude = -74.0060;
+
+        BusPassenger passenger = createPassenger("PNR001", "PASS001");
+
+        when(passengerService.getUnnotifiedPassengersByBusId(busId))
+                .thenReturn(Arrays.asList(passenger));
+
+        // When
+        List<NotificationRequest> result = locationProcessingService.processBusLocation(
+                busId, busLatitude, busLongitude);
+
+        // Then
+        assertEquals(1, result.size());
+        NotificationRequest request = result.get(0);
+        assertEquals("PASS001", request.getPassengerId());
+        assertEquals("John Doe", request.getPassengerName());
+        assertEquals("+1234567890", request.getPassengerPhone());
+        assertEquals(new BigDecimal("40.7580"), request.getPickupLatitude());
+        assertEquals(new BigDecimal("-73.9855"), request.getPickupLongitude());
+        assertEquals("123 Main St", request.getPickupAddress());
+        assertNotNull(request.getEstimatedMinutes());
+    }
 }

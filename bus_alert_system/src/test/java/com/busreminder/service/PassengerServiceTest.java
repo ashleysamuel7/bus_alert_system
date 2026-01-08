@@ -98,6 +98,40 @@ class PassengerServiceTest {
         verify(busPassengerRepository).findByPnrIdInAndNotifiedFalse(Arrays.asList("PNR001"));
     }
 
+    @Test
+    void testGetUnnotifiedPassengersByBusId_WhenNoPnrs() {
+        // Given
+        String busId = "BUS999";
+        when(busPnrRepository.findByBusId(busId)).thenReturn(Collections.emptyList());
+
+        // When
+        List<BusPassenger> result = passengerService.getUnnotifiedPassengersByBusId(busId);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(busPnrRepository).findByBusId(busId);
+        verify(busPassengerRepository, never()).findByPnrIdInAndNotifiedFalse(anyList());
+    }
+
+    @Test
+    void testGetUnnotifiedPassengersByBusId_NoUnnotifiedPassengers() {
+        // Given
+        String busId = "BUS001";
+        BusPnr pnr1 = createBusPnr("BUS001", "PNR001");
+
+        when(busPnrRepository.findByBusId(busId)).thenReturn(Arrays.asList(pnr1));
+        when(busPassengerRepository.findByPnrIdInAndNotifiedFalse(Arrays.asList("PNR001")))
+                .thenReturn(Collections.emptyList());
+
+        // When
+        List<BusPassenger> result = passengerService.getUnnotifiedPassengersByBusId(busId);
+
+        // Then
+        assertTrue(result.isEmpty());
+        verify(busPnrRepository).findByBusId(busId);
+        verify(busPassengerRepository).findByPnrIdInAndNotifiedFalse(Arrays.asList("PNR001"));
+    }
+
     private BusPnr createBusPnr(String busId, String pnrId) {
         BusPnr busPnr = new BusPnr();
         busPnr.setBusId(busId);
